@@ -2,6 +2,9 @@
 
 Projeto realizado para exercitar boas práticas de Cloud, Administração e Integração de Sistemas.
 
+Nele será desenvolvido vários mini projetos, cada um abordando uma integração específica. E, ao fim,
+um projeto maior será construído, integrando todos os mini projetos.
+
 ## Política de nomenclatura de branches
 
 - Sempre inclua o ID da issue relacionada no nome do branch, após o tipo e antes da descrição.  
