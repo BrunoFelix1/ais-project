@@ -30,12 +30,16 @@ def listar_instancias():
 def criar_instancia():
     nome = input("Nome da instância: ")
     tipo = input("Tipo da instância (default: t3.micro): ") or "t3.micro"
+    key_name = input("Nome da key pair para SSH (deve existir na AWS): ") # adicionar no dotenv isso
+    sg_id = input("ID do Security Group já criado na AWS (liberado para SSH): ")
 
     instance = ec2.create_instances(
         ImageId="ami-0c02fb55956c7d316",  
         MinCount=1,
         MaxCount=1,
         InstanceType=tipo,
+        KeyName=key_name,
+        SecurityGroupIds=[sg_id],
         TagSpecifications=[{
             "ResourceType": "instance",
             "Tags": [{"Key": "Name", "Value": nome}]
@@ -43,6 +47,9 @@ def criar_instancia():
     )[0]
 
     print(f"Instância criada: {instance.id}")
+    print("Aguarde a inicialização e obtenha o IP público para conectar via SSH:")
+    print("Exemplo de comando:")
+    print("ssh -i /caminho/para/sua/key.pem ubuntu@<IP_PUBLICO>")
 
 def iniciar_instancia():
     id = input("ID da instância: ")
