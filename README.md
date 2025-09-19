@@ -2,7 +2,7 @@
 
 Projeto realizado para exercitar boas práticas de Cloud, Administração e Integração de Sistemas.
 
-Nele será desenvolvido vários mini projetos, cada um abordando uma integração específica. E, ao fim,
+Nele serão desenvolvido vários mini projetos, cada um abordando uma integração específica. E, ao fim,
 um projeto maior será construído, integrando todos os mini projetos.
 
 ## Política de nomenclatura de branches
@@ -17,5 +17,3 @@ um projeto maior será construído, integrando todos os mini projetos.
 - **chore/**: Para tarefas de manutenção. Exemplo: `chore/32-update-dependencies`
 - **test/**: Para adição ou modificação de testes. Exemplo: `test/56-add-unit-tests`
 - **refactor/**: Para refatoração de código. Exemplo: `refactor/101-optimize-performance`
-
-Sempre utilize nomes descritivos e separados por hífen. Evite nomes genéricos.

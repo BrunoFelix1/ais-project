@@ -1,2 +1,3 @@
 boto3 # Para CRUD de EC2
 python-dotenv # Para CRUD de EC2
+stomp.py # Para ActiveMQ

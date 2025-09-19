@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  activemq:
+    image: rmohr/activemq
+    container_name: activemq
+    ports:
+      - "61613:61613"
+      - "8161:8161"
+    restart: unless-stopped
