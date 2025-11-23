@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
-from config import get_config
+from config.config import get_config
 from repositories.crime_repository import CrimeRepository
 from services.crime_service import CrimeService
 from controllers.crime_controller import CrimeController
