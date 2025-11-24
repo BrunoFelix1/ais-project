@@ -189,6 +189,11 @@
   color: #641414;
 }
 
+.upload-card__feedback.syncing {
+  color: #0f172a;
+  font-weight: 500;
+}
+
 .stats-card {
   position: relative;
   overflow: hidden;

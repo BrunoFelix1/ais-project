@@ -6,6 +6,9 @@ import { crimeService } from "../services/crimeService";
 import "./Dashboard.css";
 const fallbackCenter = [-8.0476, -34.8761];
 
+const AUTO_SYNC_INTERVAL_MS = 3000;
+const AUTO_SYNC_MAX_ATTEMPTS = 12;
+
 const Dashboard = () => {
   const [aggregations, setAggregations] = useState([]);
   const [stats, setStats] = useState(null);
@@ -20,45 +23,86 @@ const Dashboard = () => {
     type: "",
     message: "",
   });
+  const [autoSyncActive, setAutoSyncActive] = useState(false);
+  const [autoSyncAttempts, setAutoSyncAttempts] = useState(0);
   const fileInputRef = useRef(null);
+  const autoSyncSnapshotRef = useRef(null);
+  const autoSyncTimerRef = useRef(null);
 
-  const fetchDashboardData = useCallback(async () => {
-    try {
-      setIsRefreshing(true);
-      setErrorMessage("");
-
-      const [aggregationsResponse, statsResponse] = await Promise.all([
-        crimeService.getAggregations(),
-        crimeService.getStats(),
-      ]);
-
-      const aggregationsData = aggregationsResponse?.data || [];
-
-      setAggregations(aggregationsData);
-      setSelectedBairro((previous) => {
-        if (
-          previous &&
-          aggregationsData.some((item) => item.bairro === previous.bairro)
-        ) {
-          return (
-            aggregationsData.find((item) => item.bairro === previous.bairro) ||
-            null
-          );
+  const fetchDashboardData = useCallback(
+    async ({ silent = false, checkSnapshot = false } = {}) => {
+      let hasChanged = true;
+      try {
+        if (!silent) {
+          setIsRefreshing(true);
         }
-        return aggregationsData[0] || null;
-      });
+        setErrorMessage("");
 
-      setStats(statsResponse?.data || null);
-    } catch (error) {
-      console.error("Erro ao carregar dashboard", error);
-      setErrorMessage(
-        "Não foi possível carregar os dados. Tente novamente em instantes."
-      );
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
+        const [aggregationsResponse, statsResponse] = await Promise.all([
+          crimeService.getAggregations(),
+          crimeService.getStats(),
+        ]);
+
+        const aggregationsData = aggregationsResponse?.data || [];
+
+        setAggregations(aggregationsData);
+        setSelectedBairro((previous) => {
+          if (
+            previous &&
+            aggregationsData.some((item) => item.bairro === previous.bairro)
+          ) {
+            return (
+              aggregationsData.find(
+                (item) => item.bairro === previous.bairro
+              ) || null
+            );
+          }
+          return aggregationsData[0] || null;
+        });
+
+        const nextStats = statsResponse?.data || null;
+        setStats(nextStats);
+
+        const nextSnapshot = JSON.stringify({
+          totals: {
+            crimes: nextStats?.total_crimes ?? null,
+            prejuizo: nextStats?.total_prejuizo ?? null,
+            bairros: nextStats?.total_bairros ?? null,
+          },
+          aggregations: aggregationsData.map(
+            (item) =>
+              `${item?.bairro || ""}:${item?.total_crimes || 0}:${
+                item?.prejuizo_total || 0
+              }`
+          ),
+        });
+
+        const previousSnapshot = autoSyncSnapshotRef.current;
+        hasChanged =
+          !checkSnapshot ||
+          !previousSnapshot ||
+          previousSnapshot !== nextSnapshot;
+
+        if (!checkSnapshot || hasChanged) {
+          autoSyncSnapshotRef.current = nextSnapshot;
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dashboard", error);
+        setErrorMessage(
+          "Não foi possível carregar os dados. Tente novamente em instantes."
+        );
+        hasChanged = false;
+      } finally {
+        setIsLoading(false);
+        if (!silent) {
+          setIsRefreshing(false);
+        }
+      }
+
+      return hasChanged;
+    },
+    []
+  );
 
   useEffect(() => {
     fetchDashboardData();
@@ -86,8 +130,11 @@ const Dashboard = () => {
       setUploadFeedback({
         type: "success",
         message:
-          "Arquivo enviado com sucesso, estamos processando novos dados. Pressione o botão Atualizar Dados para obter as informações mais recentes.",
+          "Arquivo enviado! Atualizaremos os dados automaticamente enquanto o processamento acontece.",
       });
+      autoSyncSnapshotRef.current = null;
+      setAutoSyncAttempts(0);
+      setAutoSyncActive(true);
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -103,6 +150,79 @@ const Dashboard = () => {
       setUploading(false);
     }
   };
+
+  useEffect(() => {
+    if (!autoSyncActive) {
+      if (autoSyncTimerRef.current) {
+        clearTimeout(autoSyncTimerRef.current);
+        autoSyncTimerRef.current = null;
+      }
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    const runAutoSync = async (attempt) => {
+      autoSyncTimerRef.current = setTimeout(async () => {
+        if (cancelled) {
+          return;
+        }
+
+        const hasChanged = await fetchDashboardData({
+          silent: true,
+          checkSnapshot: true,
+        });
+
+        if (cancelled || !autoSyncActive) {
+          return;
+        }
+
+        if (!hasChanged) {
+          setAutoSyncActive(false);
+          setAutoSyncAttempts(0);
+          setUploadFeedback((previous) =>
+            previous.type === "error"
+              ? previous
+              : {
+                  type: "success",
+                  message:
+                    "Nenhuma mudança detectada. Novas tentativas serão feitas quando houver novos dados.",
+                }
+          );
+          return;
+        }
+
+        const nextAttempt = attempt + 1;
+        setAutoSyncAttempts(nextAttempt);
+
+        if (nextAttempt >= AUTO_SYNC_MAX_ATTEMPTS) {
+          setAutoSyncActive(false);
+          setUploadFeedback((previous) =>
+            previous.type === "error"
+              ? previous
+              : {
+                  type: "success",
+                  message:
+                    "Processamento ainda em andamento. Continue acompanhando ou use o botão Atualizar Dados.",
+                }
+          );
+          return;
+        }
+
+        runAutoSync(nextAttempt);
+      }, AUTO_SYNC_INTERVAL_MS);
+    };
+
+    runAutoSync(0);
+
+    return () => {
+      cancelled = true;
+      if (autoSyncTimerRef.current) {
+        clearTimeout(autoSyncTimerRef.current);
+        autoSyncTimerRef.current = null;
+      }
+    };
+  }, [autoSyncActive, fetchDashboardData]);
 
   const formatNumber = (value) => {
     const safeValue = Number.isFinite(value) ? value : 0;
@@ -130,12 +250,6 @@ const Dashboard = () => {
     }
     return list.sort((a, b) => (b.total_crimes || 0) - (a.total_crimes || 0));
   }, [aggregations, searchTerm]);
-
-  const topBairros = useMemo(() => {
-    return [...aggregations]
-      .sort((a, b) => (b.total_crimes || 0) - (a.total_crimes || 0))
-      .slice(0, 4);
-  }, [aggregations]);
 
   const mapMarkers = useMemo(() => {
     return aggregations.filter(
@@ -212,7 +326,7 @@ const Dashboard = () => {
             onClick={fetchDashboardData}
             disabled={isRefreshing}
           >
-            {isRefreshing ? "Atualizando..." : "Atualizar dados"}
+            {isRefreshing ? "Atualizando..." : "Atualizar Dados"}
           </button>
         </header>
         {errorMessage && (
@@ -258,6 +372,12 @@ const Dashboard = () => {
               }`}
             >
               {uploadFeedback.message}
+            </p>
+          )}
+          {autoSyncActive && (
+            <p className="upload-card__feedback syncing">
+              Sincronizando novos dados automaticamente... (tentativa{" "}
+              {autoSyncAttempts + 1} de {AUTO_SYNC_MAX_ATTEMPTS})
             </p>
           )}
         </section>
