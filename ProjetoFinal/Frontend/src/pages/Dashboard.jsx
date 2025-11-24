@@ -395,28 +395,28 @@ const Dashboard = () => {
                     <span
                       className="map-panel__legend-dot"
                       style={{ background: "#22c55e" }}
-                    />
+                    />{" "}
                     Baixa incidência
                   </span>
                   <span>
                     <span
                       className="map-panel__legend-dot"
                       style={{ background: "#eab308" }}
-                    />
+                    />{" "}
                     Atenção
                   </span>
                   <span>
                     <span
                       className="map-panel__legend-dot"
                       style={{ background: "#f97316" }}
-                    />
+                    />{" "}
                     Criticidade
                   </span>
                   <span>
                     <span
                       className="map-panel__legend-dot"
                       style={{ background: "#dc2626" }}
-                    />
+                    />{" "}
                     Muito crítico
                   </span>
                 </div>
