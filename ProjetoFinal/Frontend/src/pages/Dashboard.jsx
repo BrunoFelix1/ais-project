@@ -469,7 +469,7 @@ const Dashboard = () => {
           <article className="card">
             <div className="map-panel__header">
               <div>
-                <p className="map-panel__subtitle">Mapa inteligente</p>
+                <p className="map-panel__subtitle">Mapa de Criminalidade</p>
                 <h2 className="map-panel__title">Distribuição de crimes</h2>
               </div>
             </div>
@@ -552,7 +552,7 @@ const Dashboard = () => {
           <article className="card">
             <div className="list-panel__header">
               <div>
-                <p className="list-panel__subtitle">Prioridade de resposta</p>
+                <p className="list-panel__subtitle">Informações específicas</p>
                 <h2 className="list-panel__title">Bairros monitorados</h2>
               </div>
             </div>
