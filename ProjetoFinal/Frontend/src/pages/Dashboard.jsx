@@ -85,7 +85,8 @@ const Dashboard = () => {
       await crimeService.uploadCsv(selectedFile);
       setUploadFeedback({
         type: "success",
-        message: "Arquivo enviado com sucesso! Processando novos dados...",
+        message:
+          "Arquivo enviado com sucesso, estamos processando novos dados. Pressione o botão Atualizar Dados para obter as informações mais recentes.",
       });
       setSelectedFile(null);
       if (fileInputRef.current) {
@@ -444,19 +445,6 @@ const Dashboard = () => {
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
             </div>
-
-            {topBairros.length > 0 && (
-              <div className="list-panel__chips">
-                {topBairros.map((bairro, index) => (
-                  <span
-                    key={`${bairro.bairro || "bairro"}-${index}`}
-                    className="list-panel__chip"
-                  >
-                    {bairro.bairro || "Bairro não informado"}
-                  </span>
-                ))}
-              </div>
-            )}
 
             {hasData ? (
               <div className="bairro-list">
