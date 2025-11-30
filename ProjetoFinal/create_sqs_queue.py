@@ -49,7 +49,6 @@ def create_sqs_queue():
         
         print(f"✓ Fila '{queue_name}' criada com sucesso!")
         print(f"  URL: {queue_url}")
-        print(f"\nAdicione esta variável no seu .env:")
         print(f"SQS_QUEUE_URL={queue_url}")
         
         return queue_url
