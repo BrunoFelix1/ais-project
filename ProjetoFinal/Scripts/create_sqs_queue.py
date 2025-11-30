@@ -43,7 +43,7 @@ def create_sqs_queue():
                 'ReceiveMessageWaitTimeSeconds': '20',  # Long polling
                 'DelaySeconds': '0'
             }
-        )
+        )   
         
         queue_url = response['QueueUrl']
         
