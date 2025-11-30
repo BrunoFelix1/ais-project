@@ -1,13 +1,11 @@
 from decimal import Decimal, ROUND_HALF_UP
-import json
 import os
 from typing import Any, Dict
 import boto3
-import stomp
 
 
-class CrimeProcessor(stomp.ConnectionListener):
-    """Listener que processa mensagens da fila de crimes"""
+class CrimeProcessor:
+    """Processador de mensagens de crimes do SQS"""
 
     def __init__(self):
         self.processed_messages = 0
@@ -21,11 +19,9 @@ class CrimeProcessor(stomp.ConnectionListener):
         )
         self.table = self.dynamodb.Table('CrimeAggregations')
 
-    def on_message(self, frame):
-        """Callback chamado quando uma mensagem é recebida"""
+    def process_crime(self, crime_data: Dict[str, Any]):
+        """Processa um crime recebido do SQS"""
         try:
-            crime_data = json.loads(frame.body)
-
             bairro = crime_data.get('bairro')
             print(f"Processando crime: ID={crime_data.get('id')}, Bairro={bairro}")
 

@@ -1,6 +1,7 @@
 import csv
 import json
-import stomp
+import os
+import boto3
 from typing import Dict, Any
 from werkzeug.datastructures import FileStorage
 from models.crime import Crime
@@ -8,18 +9,24 @@ from io import StringIO
 
 
 class CrimeService:
-    """Serviço para processar upload de CSV e enviar mensagens para a fila"""
+    """Serviço para processar upload de CSV e enviar mensagens para a fila SQS"""
     
-    def __init__(self, activemq_host='localhost', activemq_port=61613):
-        self.activemq_host = activemq_host
-        self.activemq_port = activemq_port
-        self.queue_name = '/queue/crimes.processing'
+    def __init__(self):
+        self.queue_url = os.getenv('SQS_QUEUE_URL', 'https://sqs.us-east-1.amazonaws.com/817977750239/crimes-processing-queue')
+        
+        # Cliente SQS
+        self.sqs = boto3.client(
+            'sqs',
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+            region_name=os.getenv('AWS_REGION', 'us-east-1')
+        )
     
     def process_csv_upload(self, file: FileStorage) -> Dict[str, Any]:
         """
         Processa o upload do arquivo CSV:
         1. Lê o arquivo via stream
-        2. Envia cada linha como mensagem para a fila ActiveMQ
+        2. Envia cada linha como mensagem para a fila SQS
         """
         if not file:
             return {
@@ -34,10 +41,6 @@ class CrimeService:
             }
         
         try:
-            # Conecta ao ActiveMQ
-            conn = stomp.Connection([(self.activemq_host, self.activemq_port)])
-            conn.connect('admin', 'admin', wait=True)
-            
             # Lê o arquivo via stream
             stream = StringIO(file.stream.read().decode("UTF-8"))
             csv_reader = csv.DictReader(stream)
@@ -51,9 +54,13 @@ class CrimeService:
                     # Cria objeto Crime a partir da linha
                     crime = Crime.from_csv_row(row)
                     
-                    # Converte para JSON e envia para a fila
+                    # Converte para JSON e envia para a fila SQS
                     message = json.dumps(crime.to_dict())
-                    conn.send(destination=self.queue_name, body=message)
+                    
+                    self.sqs.send_message(
+                        QueueUrl=self.queue_url,
+                        MessageBody=message
+                    )
                     
                     rows_processed += 1
                     
@@ -62,9 +69,6 @@ class CrimeService:
                     if len(errors) >= 10:  # Limita erros para não sobrecarregar a resposta
                         errors.append("... mais erros foram suprimidos")
                         break
-            
-            # Desconecta do ActiveMQ
-            conn.disconnect()
             
             if errors:
                 return {
