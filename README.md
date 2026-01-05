@@ -1,21 +1,7 @@
-# systems-integrations
+# Cloud Computing com AWS
 
-Projeto realizado para exercitar boas práticas de Cloud, Administração e Integração de Sistemas.
+Projeto desenvolvido para praticar boas práticas de Cloud Computing, Administração e Integração de Sistemas utilizando serviços da AWS.
 
-Nele será desenvolvido vários mini projetos, cada um abordando uma integração específica. E, ao fim,
-um projeto maior será construído, integrando todos os mini projetos.
+Foram utilizados serviços como EC2, DynamoDB, Lambda, SQS, S3 e Elastic Beanstalk.
 
-## Política de nomenclatura de branches
-
-- Sempre inclua o ID da issue relacionada no nome do branch, após o tipo e antes da descrição.  
-  Exemplo: `feature/123-login-page` (onde `123` é o ID da issue)
-
-- **feature/**: Para novas funcionalidades. Exemplo: `feature/123-login-page`
-- **bugfix/**: Para correções de bugs. Exemplo: `bugfix/45-fix-auth-error`
-- **hotfix/**: Para correções urgentes na main. Exemplo: `hotfix/77-critical-issue`
-- **docs/**: Para alterações na documentação. Exemplo: `docs/88-update-readme`
-- **chore/**: Para tarefas de manutenção. Exemplo: `chore/32-update-dependencies`
-- **test/**: Para adição ou modificação de testes. Exemplo: `test/56-add-unit-tests`
-- **refactor/**: Para refatoração de código. Exemplo: `refactor/101-optimize-performance`
-
-Sempre utilize nomes descritivos e separados por hífen. Evite nomes genéricos.
+O projeto final consiste na visualização de dados criminais do Estado de São Paulo em um mapa, com arquitetura em nuvem escalável e desacoplada, utilizando mensageria e processamento serverless.
